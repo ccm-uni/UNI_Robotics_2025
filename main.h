@@ -7,6 +7,7 @@
 
 #include "HUSKYLENS/HUSKYLENS.h"  // Camera
 
+#define SetWORDval(arg) (uint8_t)(((uint16_t)arg)>>8),(uint8_t)arg
 
 #define driver1Addr 0x80
 #define driver2Addr 0x81

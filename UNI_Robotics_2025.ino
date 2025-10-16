@@ -123,6 +123,7 @@ void processControllers() {
   }
 }
 
+
 /**
  * Safety loop to check if stuff is still connected
  * Shuts stuff off if not
@@ -198,7 +199,8 @@ void drive(int powFL, int powBL, int powBR, int powFR) {
 // Arduino setup function. Runs in CPU 1
 void setup() {
   Serial.begin(115200);
-  Serial2.begin(38400, 12, 13);  // RoboClaw Serial bus
+
+  motorDriver.begin(38400);  // Initialize the motor drivers
   Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
   const uint8_t* addr = BP32.localBdAddress();
   Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
@@ -232,50 +234,33 @@ void setup() {
     delay(100);
   }
 */
-
-  // Initialize the motor drivers
-  motorDriver.begin(38400);
 }
 
 // Arduino loop function. Runs in CPU 1.
 void loop() {
   // This call fetches all the controllers' data.
   // Call this function in your main loop.
-  if (BP32.update()) {
-    processControllers();
-  }
+  //if (BP32.update()) {
+  //  processControllers();
+  //}
 
+  /*
   if (!safetyLoop()) {
     for (int i = 0; i < 4; i++) {
       motorPowers[i] = 0;
     }
   }
+  */
 
   // Calculate mechanum wheel powers from xy controlls
-  calculateMech(control.LY, control.LX, control.RX);
-
-  if (control.dpad_up) {
-    Serial.println("DPAD UP");
-  }
-  if (control.dpad_down) {
-    Serial.println("DPAD down");
-  }
-  if (control.dpad_left) {
-    Serial.println("DPAD left");
-  }
-  if (control.dpad_right) {
-    Serial.println("DPAD right");
-  }
-
-  motorDriver.ReadEncM1(driver1Addr);
+  //calculateMech(control.LY, control.LX, control.RX);
 
 
-  // The main loop must have some kind of "yield to lower priority task" event.
-  // Otherwise, the watchdog will get triggered.
-  // If your main loop doesn't have one, just add a simple `vTaskDelay(1)`.
-  // Detailed info here:
-  // https://stackoverflow.com/questions/66278271/task-watchdog-got-triggered-the-tasks-did-not-reset-the-watchdog-in-time
+  motorDriver.SpeedM2(0x80, 4095);
+  delay(2000);
+  motorDriver.SpeedM2(0x80, 0);
+  delay(2000);
 
-  //     vTaskDelay(1);
-  delay(150);
+
+
 }
