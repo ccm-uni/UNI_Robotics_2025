@@ -151,51 +151,43 @@ bool safetyLoop() {
  * y - Forward/Reverse
  * x - Left/Right
  * rot - Rotation
+ * Stores data in desiredPowers[] array
  */
 void calculateMech(int y, int x, int rot) {
 
+  // Applies deadzones to inputs
+  if (y > -contDeadzone && y < contDeadzone) {
+    y = 0;
+  }
+  if (x > -contDeadzone && x < contDeadzone) {
+    x = 0;
+  }
+  if (rot > -contDeadzone && rot < contDeadzone) {
+    rot = 0;
+  }
+
   // Mechanum calculation matrix
-  desiredPowers[0] = x + y + rot;
-  desiredPowers[1] = x + y + rot;
-  desiredPowers[2] = x + y + rot;
-  desiredPowers[3] = x + y + rot;
+  desiredPowers[0] = (x + y + rot) * 8;
+  desiredPowers[1] = (x + y + rot) * 8;
+  desiredPowers[2] = (x + y + rot) * 8;
+  desiredPowers[3] = (x + y + rot) * 8;
 }
 
 
 void drive(int powFL, int powBL, int powBR, int powFR) {
 
-  // FLMo
-  if (powFL >= 0) {
-    motorDriver.ForwardM1(driver1Addr, powFL);
-  } else if (powFL < 0) {
-    motorDriver.BackwardM1(driver1Addr, powFL);
-  } else {
-  }
+  // FLMotor
+  motorDriver.SpeedM1(driver1Addr, powFL);
 
-  if (powBL >= 0) {
-    motorDriver.ForwardM2(driver1Addr, powBL);
-  } else if (powBL < 0) {
-    motorDriver.BackwardM2(driver1Addr, powBL);
-  } else {
-  }
+  //BLMotor
+  motorDriver.SpeedM2(driver1Addr, powBL);
 
+  // BRMotor
+  motorDriver.SpeedM1(driver2Addr, powBR);
 
-  if (powBR >= 0) {
-    motorDriver.ForwardM1(driver2Addr, powBR);
-  } else if (powBR < 0) {
-    motorDriver.BackwardM1(driver2Addr, powBR);
-  } else {
-  }
-
-  if (powFR >= 0) {
-    motorDriver.ForwardM2(driver2Addr, powFR);
-  } else if (powFR < 0) {
-    motorDriver.BackwardM2(driver2Addr, powFR);
-  } else {
-  }
+  // FRMotor
+  motorDriver.SpeedM2(driver2Addr, powFR);
 }
-
-
 
 
 // Arduino setup function. Runs in CPU 1
@@ -243,17 +235,12 @@ void setup() {
 // Arduino loop function. Runs in CPU 1.
 void loop() {
 
+  // Updates the controller once a timer is done.
   if (millis() - prevTime >= 15) {
     BP32.update();
     processControllers();
     prevTime = millis();
   }
-
-  // This call fetches all the controllers' data.
-  // Call this function in your main loop.
-  //if (BP32.update()) {
-  // processControllers();
-  //}
 
   /*
   if (!safetyLoop()) {
@@ -266,26 +253,15 @@ void loop() {
   // Calculate mechanum wheel powers from xy controlls
   //calculateMech(control.LY, control.LX, control.RX);
 
+  // Send calculated powers to the motor
+  //drive(desiredPowers[0], desiredPowers[1], desiredPowers[2], desiredPowers[3]);
 
-  if (control.LX > 16 || control.LX < -16) {
-    motorDriver.SpeedM1(driver1Addr, control.LX * 8);
-    Serial.println(control.LX * 8);
+
+  if (control.LX < 16 || control.LX > -16) {
+    motorDriver.SpeedM1(driver2Addr, control.LX * 7);
   } else {
-    motorDriver.SpeedM1(driver1Addr, 0);
-    Serial.println(control.LX * 8);
+    motorDriver.SpeedM1(driver2Addr, control.LX * 7);
   }
-
-  /*
-  motorDriver.SpeedM1(0x80, 2048);
-  delay(2000);
-  motorDriver.SpeedM1(0x80, 0);
-  delay(1000);
-
-  motorDriver.SpeedM1(0x80, -2048);
-  delay(2000);
-  motorDriver.SpeedM1(0x80, 0);
-  delay(1000);
-*/
 
 
   delay(25);

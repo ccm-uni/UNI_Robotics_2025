@@ -13,6 +13,8 @@
 #define driver1Addr 0x80
 #define driver2Addr 0x81
 
+#define contDeadzone 16
+
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
