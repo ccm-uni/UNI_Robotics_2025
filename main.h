@@ -1,3 +1,4 @@
+#include <sys/_types.h>
 #ifndef main
 #define main
 
@@ -58,6 +59,9 @@ struct ControllerButtons {
     dpad_down,
     dpad_left,
     dpad_right;
+
+    bool
+    connected = false;
 };
 
 /**
@@ -70,8 +74,7 @@ struct ControllerButtons {
 */
 int8_t desiredPowers[4] = { 0, 0, 0, 0 };
 
-bool controllerConnected = false;
-
+unsigned long prevTime = 0;
 
 void onConnectedController(ControllerPtr ctl);
 void onDisconnectedController(ControllerPtr ctl);

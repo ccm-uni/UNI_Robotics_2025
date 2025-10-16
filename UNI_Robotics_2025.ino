@@ -100,7 +100,7 @@ void processGamepad(ControllerPtr ctl) {
 void processControllers() {
 
   // While trying to process the controller, if it doesn't get the proper data, makes this false
-  controllerConnected = false;
+  control.connected;
 
   for (auto myController : myControllers) {
 
@@ -118,7 +118,7 @@ void processControllers() {
 
     } else {  // Regular run
       processGamepad(myController);
-      controllerConnected = true;
+      control.connected = true;
     }
   }
 }
@@ -131,7 +131,7 @@ void processControllers() {
 bool safetyLoop() {
 
   // If the controller is connected
-  if (!controllerConnected) {
+  if (!control.connected) {
     Serial.println("ALERT: PS4 Controller disconnected");
     return false;
   }
@@ -196,11 +196,14 @@ void drive(int powFL, int powBL, int powBR, int powFR) {
 }
 
 
+
+
 // Arduino setup function. Runs in CPU 1
 void setup() {
-  Serial.begin(115200);
 
+  Serial.begin(115200);
   motorDriver.begin(38400);  // Initialize the motor drivers
+
   Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
   const uint8_t* addr = BP32.localBdAddress();
   Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
@@ -222,7 +225,7 @@ void setup() {
   // - Second one, which is a "virtual device", is a mouse.
   // By default, it is disabled.
   BP32.enableVirtualDevice(false);
-*/
+  */
 
 
   /*
@@ -233,15 +236,23 @@ void setup() {
     Serial.println(F("2.Please recheck the connection."));
     delay(100);
   }
-*/
+  */
 }
+
 
 // Arduino loop function. Runs in CPU 1.
 void loop() {
+
+  if (millis() - prevTime >= 15) {
+    BP32.update();
+    processControllers();
+    prevTime = millis();
+  }
+
   // This call fetches all the controllers' data.
   // Call this function in your main loop.
   //if (BP32.update()) {
-  //  processControllers();
+  // processControllers();
   //}
 
   /*
@@ -256,11 +267,26 @@ void loop() {
   //calculateMech(control.LY, control.LX, control.RX);
 
 
-  motorDriver.SpeedM2(0x80, 4095);
+  if (control.LX > 16 || control.LX < -16) {
+    motorDriver.SpeedM1(driver1Addr, control.LX * 8);
+    Serial.println(control.LX * 8);
+  } else {
+    motorDriver.SpeedM1(driver1Addr, 0);
+    Serial.println(control.LX * 8);
+  }
+
+  /*
+  motorDriver.SpeedM1(0x80, 2048);
   delay(2000);
-  motorDriver.SpeedM2(0x80, 0);
+  motorDriver.SpeedM1(0x80, 0);
+  delay(1000);
+
+  motorDriver.SpeedM1(0x80, -2048);
   delay(2000);
+  motorDriver.SpeedM1(0x80, 0);
+  delay(1000);
+*/
 
 
-
+  delay(25);
 }
