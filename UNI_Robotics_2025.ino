@@ -24,6 +24,7 @@ void onConnectedController(ControllerPtr ctl) {
   }
 }
 
+
 // When a controller disconnects
 void onDisconnectedController(ControllerPtr ctl) {
   bool foundController = false;
@@ -43,7 +44,9 @@ void onDisconnectedController(ControllerPtr ctl) {
 }
 
 
-// Print all Gamepad data to Serial
+/**
+  * Print all Gamepad data to Serial
+  */
 void dumpGamepad(ControllerPtr ctl) {
   Serial.printf(
     "idx=%d, dpad: 0x%02x, buttons: 0x%04x, axis L: %4d, %4d, axis R: %4d, %4d, brake: %4d, throttle: %4d, "
@@ -67,27 +70,37 @@ void dumpGamepad(ControllerPtr ctl) {
   );
 }
 
-// Handle BT Gamepad
+
+/**
+  * Map all BT32 controller values to local struct
+  */
 void processGamepad(ControllerPtr ctl) {
 
   // Connection Good
   //ctl->setColorLED(0, 255, 0);
 
   control.LX = ctl->axisX();
-  control.LY = ctl->axisY();
+  control.LY = -ctl->axisY();
   control.RX = ctl->axisRX();
-  control.RY = ctl->axisRY();
+  control.RY = -ctl->axisRY();
+
+  control.L2 = ctl->l2();
+  control.R2 = ctl->r2();
+
+  control.dpad_up = ctl->dpad() & 0x01;
+  control.dpad_down = ctl->dpad() & 0x02;
+  control.dpad_right = ctl->dpad() & 0x04;
+  control.dpad_left = ctl->dpad() & 0x08;
 
   control.cross = ctl->a();
   control.circle = ctl->b();
   control.triangle = ctl->y();
   control.square = ctl->x();
 
-
-  control.dpad_up = ctl->dpad() & 0x01;
-  control.dpad_down = ctl->dpad() & 0x02;
-  control.dpad_right = ctl->dpad() & 0x04;
-  control.dpad_left = ctl->dpad() & 0x08;
+  control.L1 = ctl->l1();
+  control.R1 = ctl->r1();
+  control.L3 = ctl->L3();
+  control.R3 = ctl->L3();
 
 
   // Another way to query controller data is by getting the buttons() function.
@@ -96,11 +109,14 @@ void processGamepad(ControllerPtr ctl) {
 }
 
 
-// Determine which controller proccessor to use
+/**
+  * Determine which controller proccessor to use
+  * Makes sure the controller is sending proper data
+  */
 void processControllers() {
 
   // While trying to process the controller, if it doesn't get the proper data, makes this false
-  control.connected;
+  control.connected = false;
 
   for (auto myController : myControllers) {
 
@@ -125,9 +141,9 @@ void processControllers() {
 
 
 /**
- * Safety loop to check if stuff is still connected
- * Shuts stuff off if not
- */
+  * Safety loop to check if stuff is still connected
+  * Shuts stuff off if not
+  */
 bool safetyLoop() {
 
   // If the controller is connected
@@ -148,11 +164,12 @@ bool safetyLoop() {
 
 
 /**
- * y - Forward/Reverse
- * x - Left/Right
- * rot - Rotation
- * Stores data in desiredPowers[] array
- */
+  * Calculates motor powers based on mechanum wheel matrix
+  * y - Forward/Reverse
+  * x - Left/Right
+  * rot - Rotation
+  * Stores data in desiredPowers[] array
+  */
 void calculateMech(int y, int x, int rot) {
 
   // Applies deadzones to inputs
@@ -167,13 +184,16 @@ void calculateMech(int y, int x, int rot) {
   }
 
   // Mechanum calculation matrix
-  desiredPowers[0] = (x + y + rot) * 8;
-  desiredPowers[1] = (x + y + rot) * 8;
-  desiredPowers[2] = (x + y + rot) * 8;
-  desiredPowers[3] = (x + y + rot) * 8;
+  desiredPowers[0] = (x + y + rot) * 7;
+  desiredPowers[1] = (x + y + rot) * 7;
+  desiredPowers[2] = (x + y + rot) * 7;
+  desiredPowers[3] = (x + y + rot) * 7;
 }
 
 
+/**
+  * Moves the robot based on direct motor control input
+  */
 void drive(int powFL, int powBL, int powBR, int powFR) {
 
   // FLMotor
@@ -190,7 +210,9 @@ void drive(int powFL, int powBL, int powBR, int powFR) {
 }
 
 
-// Arduino setup function. Runs in CPU 1
+/**
+  * Arduino setup function. Runs in CPU 1
+  */
 void setup() {
 
   Serial.begin(115200);
@@ -232,11 +254,13 @@ void setup() {
 }
 
 
-// Arduino loop function. Runs in CPU 1.
+/**
+  * Arduino loop function. Runs in CPU 1.
+  */
 void loop() {
 
   // Updates the controller once a timer is done.
-  if (millis() - prevTime >= 15) {
+  if (millis() - prevTime >= 25) {
     BP32.update();
     processControllers();
     prevTime = millis();
@@ -263,6 +287,6 @@ void loop() {
     motorDriver.SpeedM1(driver2Addr, control.LX * 7);
   }
 
-
-  delay(25);
+  // Makes sure the watchdog doesn't catch because nothing happened
+  delay(180);
 }

@@ -1,14 +1,14 @@
-#include <sys/_types.h>
+#include <type_traits>
+#include <sys/_stdint.h>
 #ifndef main
 #define main
 
 #include <Bluepad32.h>
-#include <sys/_stdint.h>
 #include <RoboClaw.h>
 
 #include "HUSKYLENS/HUSKYLENS.h"  // Camera
 
-#define SetWORDval(arg) (uint8_t)(((uint16_t)arg)>>8),(uint8_t)arg
+#define SetWORDval(arg) (uint8_t)(((uint16_t)arg) >> 8), (uint8_t)arg
 
 #define driver1Addr 0x80
 #define driver2Addr 0x81
@@ -39,7 +39,7 @@ byte motorPins[4] = { 0, 1, 2, 3 };
  * 2 - BRMotor
  * 3 - FRMotor
 */
-int8_t motorPowers[4] = { 0, 0, 0, 0 };
+int16_t motorPowers[4] = { 0, 0, 0, 0 };
 
 
 // Easy way to reach the controller values
@@ -48,13 +48,9 @@ struct ControllerButtons {
     LX = 0,
     LY = 0,
     RX = 0,
-    RY = 0;
-
-  bool
-    cross = false,
-    circle = false,
-    triangle = false,
-    square = false;
+    RY = 0,
+    L2 = 0,
+    R2 = 0;
 
   uint16_t
     dpad_up,
@@ -62,7 +58,19 @@ struct ControllerButtons {
     dpad_left,
     dpad_right;
 
-    bool
+  bool
+    cross = false,
+    circle = false,
+    triangle = false,
+    square = false;
+
+  bool
+    L1 = false,
+    R1 = false,
+    L3 = false,
+    R3 = false;
+
+  bool
     connected = false;
 };
 
