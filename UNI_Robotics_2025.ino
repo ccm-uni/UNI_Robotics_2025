@@ -99,8 +99,6 @@ void processGamepad(ControllerPtr ctl) {
 
   control.L1 = ctl->l1();
   control.R1 = ctl->r1();
-  control.L3 = ctl->L3();
-  control.R3 = ctl->L3();
 
 
   // Another way to query controller data is by getting the buttons() function.
@@ -173,13 +171,13 @@ bool safetyLoop() {
 void calculateMech(int y, int x, int rot) {
 
   // Applies deadzones to inputs
-  if (y > -contDeadzone && y < contDeadzone) {
+  if (y > -ctrlDeadzone && y < ctrlDeadzone) {
     y = 0;
   }
-  if (x > -contDeadzone && x < contDeadzone) {
+  if (x > -ctrlDeadzone && x < ctrlDeadzone) {
     x = 0;
   }
-  if (rot > -contDeadzone && rot < contDeadzone) {
+  if (rot > -ctrlDeadzone && rot < ctrlDeadzone) {
     rot = 0;
   }
 
@@ -225,7 +223,7 @@ void setup() {
   // Setup the Bluepad32 callbacks
   BP32.setup(&onConnectedController, &onDisconnectedController);
 
-  /*
+/*
   // "forgetBluetoothKeys()" should be called when the user performs
   // a "device factory reset", or similar.
   // Calling "forgetBluetoothKeys" in setup() just as an example.
@@ -239,8 +237,9 @@ void setup() {
   // - Second one, which is a "virtual device", is a mouse.
   // By default, it is disabled.
   BP32.enableVirtualDevice(false);
-  */
+*/
 
+  servo1.attach(servo1Pin);
 
   /*
   Wire.begin();
@@ -260,10 +259,10 @@ void setup() {
 void loop() {
 
   // Updates the controller once a timer is done.
-  if (millis() - prevTime >= 25) {
+  if (millis() - prevTimeBTUpdate >= 25) {
     BP32.update();
     processControllers();
-    prevTime = millis();
+    prevTimeBTUpdate = millis();
   }
 
   /*
@@ -281,11 +280,19 @@ void loop() {
   //drive(desiredPowers[0], desiredPowers[1], desiredPowers[2], desiredPowers[3]);
 
 
-  if (control.LX < 16 || control.LX > -16) {
-    motorDriver.SpeedM1(driver2Addr, control.LX * 7);
-  } else {
-    motorDriver.SpeedM1(driver2Addr, control.LX * 7);
+  for (int pos = 0; pos <= 180; pos += 1) {
+    // in steps of 1 degree
+    servo1.write(pos);
+    delay(1); // waits 15ms to reach the position
   }
+
+  // rotates from 180 degrees to 0 degrees
+  for (int pos = 180; pos >= 0; pos -= 1) {
+    servo1.write(pos);
+    delay(1); // waits 15ms to reach the position
+  }
+
+  
 
   // Makes sure the watchdog doesn't catch because nothing happened
   delay(180);

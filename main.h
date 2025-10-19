@@ -1,10 +1,9 @@
-#include <type_traits>
-#include <sys/_stdint.h>
 #ifndef main
 #define main
 
 #include <Bluepad32.h>
 #include <RoboClaw.h>
+#include <ESP32Servo.h>
 
 #include "HUSKYLENS/HUSKYLENS.h"  // Camera
 
@@ -13,7 +12,9 @@
 #define driver1Addr 0x80
 #define driver2Addr 0x81
 
-#define contDeadzone 16
+#define ctrlDeadzone 16
+
+#define servo1Pin 26
 
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
@@ -21,6 +22,8 @@ ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 HUSKYLENS camera;
 
 RoboClaw motorDriver(&Serial2, 5000);
+
+Servo servo1;
 
 
 /**
@@ -31,6 +34,7 @@ RoboClaw motorDriver(&Serial2, 5000);
  * 3 - FR Motor
  */
 byte motorPins[4] = { 0, 1, 2, 3 };
+
 
 /**
  * Stores the current output powers of the motors
@@ -66,13 +70,12 @@ struct ControllerButtons {
 
   bool
     L1 = false,
-    R1 = false,
-    L3 = false,
-    R3 = false;
+    R1 = false;
 
   bool
     connected = false;
 };
+
 
 /**
  * Stores the current target powers of the motors
@@ -84,7 +87,10 @@ struct ControllerButtons {
 */
 int8_t desiredPowers[4] = { 0, 0, 0, 0 };
 
-unsigned long prevTime = 0;
+
+// Timer for controller update
+unsigned long prevTimeBTUpdate = 0;
+
 
 void onConnectedController(ControllerPtr ctl);
 void onDisconnectedController(ControllerPtr ctl);
