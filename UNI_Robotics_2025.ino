@@ -258,41 +258,42 @@ void setup() {
   */
 void loop() {
 
+/*
   // Updates the controller once a timer is done.
   if (millis() - prevTimeBTUpdate >= 25) {
     BP32.update();
     processControllers();
     prevTimeBTUpdate = millis();
   }
+*/
 
-  /*
+/*
   if (!safetyLoop()) {
     for (int i = 0; i < 4; i++) {
       motorPowers[i] = 0;
     }
   }
-  */
+*/
 
   // Calculate mechanum wheel powers from xy controlls
   //calculateMech(control.LY, control.LX, control.RX);
 
   // Send calculated powers to the motor
   //drive(desiredPowers[0], desiredPowers[1], desiredPowers[2], desiredPowers[3]);
-
-
-  for (int pos = 0; pos <= 180; pos += 1) {
-    // in steps of 1 degree
-    servo1.write(pos);
-    delay(1); // waits 15ms to reach the position
-  }
-
-  // rotates from 180 degrees to 0 degrees
-  for (int pos = 180; pos >= 0; pos -= 1) {
-    servo1.write(pos);
-    delay(1); // waits 15ms to reach the position
-  }
-
   
+  motorDriver.SpeedM1(driver1Addr, 512);
+  motorDriver.SpeedM2(driver1Addr, 512);
+
+  motorDriver.SpeedM1(driver2Addr, 512);
+  motorDriver.SpeedM2(driver2Addr, 512);
+  delay(1000);
+
+  motorDriver.SpeedM1(driver1Addr, 0);
+  motorDriver.SpeedM2(driver1Addr, 0);
+
+  motorDriver.SpeedM1(driver2Addr, 0);
+  motorDriver.SpeedM2(driver2Addr, 0);
+  delay(1000);
 
   // Makes sure the watchdog doesn't catch because nothing happened
   delay(180);
