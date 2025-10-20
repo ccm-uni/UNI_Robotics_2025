@@ -1,3 +1,4 @@
+#include <sys/_stdint.h>
 #ifndef main
 #define main
 
@@ -13,6 +14,7 @@
 #define driver2Addr 0x81
 
 #define ctrlDeadzone 16
+#define maxSpeed 3300
 
 #define servo1Pin 26
 
@@ -26,15 +28,6 @@ RoboClaw motorDriver(&Serial2, 5000);
 Servo servo1;
 
 
-/**
- * Motor pins
- * 0 - FLMotor
- * 1 - BLMotor
- * 2 - BRMotor
- * 3 - FR Motor
- */
-byte motorPins[4] = { 0, 1, 2, 3 };
-
 
 /**
  * Stores the current output powers of the motors
@@ -43,7 +36,7 @@ byte motorPins[4] = { 0, 1, 2, 3 };
  * 2 - BRMotor
  * 3 - FRMotor
 */
-int16_t motorPowers[4] = { 0, 0, 0, 0 };
+int motorPowers[4] = { 0, 0, 0, 0 };
 
 
 // Easy way to reach the controller values
@@ -81,15 +74,19 @@ struct ControllerButtons {
  * Stores the current target powers of the motors
  *
  * 0 - FLMotor
- * 1 - BLMotor
- * 2 - BRMotor
- * 3 - FRMotor
+ * 1 - FRMotor
+ * 2 - BLMotor
+ * 3 - BRMotor
 */
-int8_t desiredPowers[4] = { 0, 0, 0, 0 };
+int desiredPowers[4] = { 0, 0, 0, 0 };
 
 
 // Timer for controller update
 unsigned long prevTimeBTUpdate = 0;
+
+// Speed mode
+bool slowMode = false;
+bool fastMode = false;
 
 
 void onConnectedController(ControllerPtr ctl);

@@ -171,40 +171,52 @@ bool safetyLoop() {
 void calculateMech(int y, int x, int rot) {
 
   // Applies deadzones to inputs
-  if (y > -ctrlDeadzone && y < ctrlDeadzone) {
-    y = 0;
-  }
-  if (x > -ctrlDeadzone && x < ctrlDeadzone) {
-    x = 0;
-  }
-  if (rot > -ctrlDeadzone && rot < ctrlDeadzone) {
-    rot = 0;
+  if (y > -ctrlDeadzone && y < ctrlDeadzone) y = 0;
+  if (x > -ctrlDeadzone && x < ctrlDeadzone) x = 0;
+  if (rot > -ctrlDeadzone && rot < ctrlDeadzone) rot = 0;
+
+  int speedMulti = 4;
+  if (slowMode) {
+    speedMulti = 2;
+  } else if (fastMode) {
+    speedMulti = 6;
   }
 
   // Mechanum calculation matrix
-  desiredPowers[0] = (x + y + rot) * 7;
-  desiredPowers[1] = (x + y + rot) * 7;
-  desiredPowers[2] = (x + y + rot) * 7;
-  desiredPowers[3] = (x + y + rot) * 7;
+  desiredPowers[0] = (y + x + rot) * speedMulti;
+  desiredPowers[1] = (y - x - rot) * speedMulti;
+  desiredPowers[2] = (y - x + rot) * speedMulti;
+  desiredPowers[3] = (y + x - rot) * speedMulti;
 }
 
 
 /**
   * Moves the robot based on direct motor control input
   */
-void drive(int powFL, int powBL, int powBR, int powFR) {
+void drive(int powFL, int powFR, int powBL, int powBR) {
+
+  /*
+  // Working on this
+  // Trying to make it so that if any of the wheels are commanded to go more than max speed, it scales back the other ones to the appropriate speed
+  int powMax = max(max(powFL, powFR), max(powBL, powBR));
+
+  if (powFL > maxSpeed || powFR > maxSpeed || powBL > maxSpeed || powBR > maxSpeed) {
+
+  }
+  */
+
 
   // FLMotor
   motorDriver.SpeedM1(driver1Addr, powFL);
 
-  //BLMotor
-  motorDriver.SpeedM2(driver1Addr, powBL);
+  // FRMotor
+  motorDriver.SpeedM2(driver1Addr, powFR);
+
+  // BLMotor
+  motorDriver.SpeedM1(driver2Addr, powBL);
 
   // BRMotor
-  motorDriver.SpeedM1(driver2Addr, powBR);
-
-  // FRMotor
-  motorDriver.SpeedM2(driver2Addr, powFR);
+  motorDriver.SpeedM2(driver2Addr, powBR);
 }
 
 
@@ -223,13 +235,13 @@ void setup() {
   // Setup the Bluepad32 callbacks
   BP32.setup(&onConnectedController, &onDisconnectedController);
 
-/*
+
   // "forgetBluetoothKeys()" should be called when the user performs
   // a "device factory reset", or similar.
   // Calling "forgetBluetoothKeys" in setup() just as an example.
   // Forgetting Bluetooth keys prevents "paired" gamepads to reconnect.
   // But it might also fix some connection / re-connection issues.
-  //BP32.forgetBluetoothKeys();
+  BP32.forgetBluetoothKeys();
 
   // Enables mouse / touchpad support for gamepads that support them.
   // When enabled, controllers like DualSense and DualShock4 generate two connected devices:
@@ -237,7 +249,7 @@ void setup() {
   // - Second one, which is a "virtual device", is a mouse.
   // By default, it is disabled.
   BP32.enableVirtualDevice(false);
-*/
+
 
   servo1.attach(servo1Pin);
 
@@ -258,43 +270,26 @@ void setup() {
   */
 void loop() {
 
-/*
-  // Updates the controller once a timer is done.
-  if (millis() - prevTimeBTUpdate >= 25) {
-    BP32.update();
-    processControllers();
-    prevTimeBTUpdate = millis();
-  }
-*/
 
-/*
+  // Updates the controller once a timer is done.
+  if (BP32.update()) {
+    processControllers();
+  }
+
+  (control.R1 && !fastMode) ? slowMode = true : slowMode = false;
+  (control.L1 && !slowMode) ? fastMode = true : fastMode = false;
+
+
+  // Calculate mechanum wheel powers from xy controlls
+  calculateMech(control.LY, control.LX, control.RX);
+
+
   if (!safetyLoop()) {
     for (int i = 0; i < 4; i++) {
       motorPowers[i] = 0;
     }
   }
-*/
-
-  // Calculate mechanum wheel powers from xy controlls
-  //calculateMech(control.LY, control.LX, control.RX);
 
   // Send calculated powers to the motor
-  //drive(desiredPowers[0], desiredPowers[1], desiredPowers[2], desiredPowers[3]);
-  
-  motorDriver.SpeedM1(driver1Addr, 512);
-  motorDriver.SpeedM2(driver1Addr, 512);
-
-  motorDriver.SpeedM1(driver2Addr, 512);
-  motorDriver.SpeedM2(driver2Addr, 512);
-  delay(1000);
-
-  motorDriver.SpeedM1(driver1Addr, 0);
-  motorDriver.SpeedM2(driver1Addr, 0);
-
-  motorDriver.SpeedM1(driver2Addr, 0);
-  motorDriver.SpeedM2(driver2Addr, 0);
-  delay(1000);
-
-  // Makes sure the watchdog doesn't catch because nothing happened
-  delay(180);
+  drive(desiredPowers[0], desiredPowers[1], desiredPowers[2], desiredPowers[3]);
 }
