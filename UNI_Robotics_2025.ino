@@ -1,6 +1,5 @@
 #include "main.h"
 
-ControllerButtons control;
 
 // This callback gets called any time a new gamepad is connected.
 // Up to 4 gamepads can be connected at the same time.
@@ -171,22 +170,22 @@ bool safetyLoop() {
 void calculateMech(int y, int x, int rot) {
 
   // Applies deadzones to inputs
-  if (y > -ctrlDeadzone && y < ctrlDeadzone) y = 0;
-  if (x > -ctrlDeadzone && x < ctrlDeadzone) x = 0;
-  if (rot > -ctrlDeadzone && rot < ctrlDeadzone) rot = 0;
+  if (y > -control.deadzone && y < control.deadzone) y = 0;
+  if (x > -control.deadzone && x < control.deadzone) x = 0;
+  if (rot > -control.deadzone && rot < control.deadzone) rot = 0;
 
-  int speedMulti = 4;
+  int speedMulti = 3;
   if (slowMode) {
-    speedMulti = 2;
+    speedMulti = 1;
   } else if (fastMode) {
     speedMulti = 6;
   }
 
   // Mechanum calculation matrix
-  desiredPowers[0] = (y + x + rot) * speedMulti;
-  desiredPowers[1] = (y - x - rot) * speedMulti;
-  desiredPowers[2] = (y - x + rot) * speedMulti;
-  desiredPowers[3] = (y + x - rot) * speedMulti;
+  motors.targetPow.FL_Motor = (y + x + rot) * speedMulti;
+  motors.targetPow.FR_Motor = (y - x - rot) * speedMulti;
+  motors.targetPow.BL_Motor = (y - x + rot) * speedMulti;
+  motors.targetPow.BR_Motor = (y + x - rot) * speedMulti;
 }
 
 
@@ -284,12 +283,18 @@ void loop() {
   calculateMech(control.LY, control.LX, control.RX);
 
 
+  // Check if everything is still connected
   if (!safetyLoop()) {
-    for (int i = 0; i < 4; i++) {
-      motorPowers[i] = 0;
-    }
+    motors.targetPow.FL_Motor = 0;
+    motors.targetPow.FR_Motor = 0;
+    motors.targetPow.BL_Motor = 0;
+    motors.targetPow.BR_Motor = 0;
   }
 
   // Send calculated powers to the motor
-  drive(desiredPowers[0], desiredPowers[1], desiredPowers[2], desiredPowers[3]);
+  drive(
+    motors.targetPow.FL_Motor,
+    motors.targetPow.FR_Motor,
+    motors.targetPow.BL_Motor,
+    motors.targetPow.BR_Motor);
 }

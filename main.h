@@ -1,4 +1,3 @@
-#include <sys/_stdint.h>
 #ifndef main
 #define main
 
@@ -8,12 +7,11 @@
 
 #include "HUSKYLENS/HUSKYLENS.h"  // Camera
 
-#define SetWORDval(arg) (uint8_t)(((uint16_t)arg) >> 8), (uint8_t)arg
+//
+#define driver1Addr 0x80 // RoboClaw 1 Address
+#define driver2Addr 0x81 // RoboClaw 2 Address
 
-#define driver1Addr 0x80
-#define driver2Addr 0x81
-
-#define ctrlDeadzone 16
+// Motor maximum speed
 #define maxSpeed 3300
 
 #define servo1Pin 26
@@ -23,21 +21,31 @@ ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
 HUSKYLENS camera;
 
+// 
 RoboClaw motorDriver(&Serial2, 5000);
 
-Servo servo1;
+Servo
+  swingArm,
+  servo1,
+  servo2,
+  servo3;
 
 
+// Need this because nested structs not allowed in ArduninC, apparently
+struct MotorStuff {
+  int16_t
+    FL_Motor = 0,
+    FR_Motor = 0,
+    BL_Motor = 0,
+    BR_Motor = 0;
+};
 
-/**
- * Stores the current output powers of the motors
- * 0 - FLMotor
- * 1 - BLMotor
- * 2 - BRMotor
- * 3 - FRMotor
-*/
-int motorPowers[4] = { 0, 0, 0, 0 };
 
+// Struct to store motor data
+// Nested structs not allowed
+struct MotorStruct {
+  MotorStuff targetPow;
+};
 
 // Easy way to reach the controller values
 struct ControllerButtons {
@@ -49,7 +57,7 @@ struct ControllerButtons {
     L2 = 0,
     R2 = 0;
 
-  uint16_t
+  bool
     dpad_up,
     dpad_down,
     dpad_left,
@@ -67,22 +75,14 @@ struct ControllerButtons {
 
   bool
     connected = false;
+
+  byte deadzone = 16;
 };
 
 
-/**
- * Stores the current target powers of the motors
- *
- * 0 - FLMotor
- * 1 - FRMotor
- * 2 - BLMotor
- * 3 - BRMotor
-*/
-int desiredPowers[4] = { 0, 0, 0, 0 };
 
-
-// Timer for controller update
-unsigned long prevTimeBTUpdate = 0;
+ControllerButtons control;
+MotorStruct motors;
 
 // Speed mode
 bool slowMode = false;
