@@ -8,20 +8,26 @@
 #include "HUSKYLENS/HUSKYLENS.h"  // Camera
 
 //
-#define driver1Addr 0x80 // RoboClaw 1 Address
-#define driver2Addr 0x81 // RoboClaw 2 Address
+#define driver1Addr 0x80  // RoboClaw 1 Address
+#define driver2Addr 0x81  // RoboClaw 2 Address
 
 // Motor maximum speed
 #define maxSpeed 3300
 
-#define servo1Pin 26
+#define servo1Pin 13
+#define servo2Pin 12
+#define servo3Pin 14
+
+#define swingArmPin 27
 
 
+// Need this for the controllers to work
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
+// Husky MV Camera object
 HUSKYLENS camera;
 
-// 
+//
 RoboClaw motorDriver(&Serial2, 5000);
 
 Servo
@@ -47,8 +53,9 @@ struct MotorStruct {
   MotorStuff targetPow;
 };
 
+
 // Easy way to reach the controller values
-struct ControllerButtons {
+struct ControllerStruct {
   int16_t
     LX = 0,
     LY = 0,
@@ -76,12 +83,15 @@ struct ControllerButtons {
   bool
     connected = false;
 
+  byte
+    colorBar[3] = {0, 0, 0};
+
   byte deadzone = 16;
 };
 
 
 
-ControllerButtons control;
+ControllerStruct control;
 MotorStruct motors;
 
 // Speed mode

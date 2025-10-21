@@ -72,11 +72,12 @@ void dumpGamepad(ControllerPtr ctl) {
 
 /**
   * Map all BT32 controller values to local struct
+  * 
   */
 void processGamepad(ControllerPtr ctl) {
 
   // Connection Good
-  //ctl->setColorLED(0, 255, 0);
+  ctl->setColorLED(control.colorBar[0], control.colorBar[1], control.colorBar[2]);
 
   control.LX = ctl->axisX();
   control.LY = -ctl->axisY();
@@ -251,6 +252,10 @@ void setup() {
 
 
   servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+  servo3.attach(servo3Pin);
+
+  swingArm.attach(swingArmPin)
 
   /*
   Wire.begin();
@@ -275,8 +280,30 @@ void loop() {
     processControllers();
   }
 
-  (control.R1 && !fastMode) ? slowMode = true : slowMode = false;
-  (control.L1 && !slowMode) ? fastMode = true : fastMode = false;
+  if (control.R1 && !fastMode) {
+    slowMode = true;
+    control.colorBar[0] = 255;
+    control.colorBar[1] = 0;
+    control.colorBar[2] = 0;
+  } else {
+    slowMode = false;
+
+    control.colorBar[0] = 0;
+    control.colorBar[1] = 255;
+    control.colorBar[2] = 0;
+  }
+
+  if (control.L1 && !slowMode) {
+    fastMode = true;
+    control.colorBar[0] = 0;
+    control.colorBar[1] = 0;
+    control.colorBar[2] = 255;
+  } else {
+    fastMode = false;
+    control.colorBar[0] = 0;
+    control.colorBar[1] = 255;
+    control.colorBar[2] = 0;
+  }
 
 
   // Calculate mechanum wheel powers from xy controlls
