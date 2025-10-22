@@ -77,28 +77,28 @@ void dumpGamepad(ControllerPtr ctl) {
 void processGamepad(ControllerPtr ctl) {
 
   // Connection Good
-  ctl->setColorLED(control.colorBar[0], control.colorBar[1], control.colorBar[2]);
+  ctl->setColorLED(controller.colorBar[0], controller.colorBar[1], controller.colorBar[2]);
 
-  control.LX = ctl->axisX();
-  control.LY = -ctl->axisY();
-  control.RX = ctl->axisRX();
-  control.RY = -ctl->axisRY();
+  controller.LX = ctl->axisX();
+  controller.LY = -ctl->axisY();
+  controller.RX = ctl->axisRX();
+  controller.RY = -ctl->axisRY();
 
-  control.L2 = ctl->l2();
-  control.R2 = ctl->r2();
+  controller.L2 = ctl->l2();
+  controller.R2 = ctl->r2();
 
-  control.dpad_up = ctl->dpad() & 0x01;
-  control.dpad_down = ctl->dpad() & 0x02;
-  control.dpad_right = ctl->dpad() & 0x04;
-  control.dpad_left = ctl->dpad() & 0x08;
+  controller.dpad_up = ctl->dpad() & 0x01;
+  controller.dpad_down = ctl->dpad() & 0x02;
+  controller.dpad_right = ctl->dpad() & 0x04;
+  controller.dpad_left = ctl->dpad() & 0x08;
 
-  control.cross = ctl->a();
-  control.circle = ctl->b();
-  control.triangle = ctl->y();
-  control.square = ctl->x();
+  controller.cross = ctl->a();
+  controller.circle = ctl->b();
+  controller.triangle = ctl->y();
+  controller.square = ctl->x();
 
-  control.L1 = ctl->l1();
-  control.R1 = ctl->r1();
+  controller.L1 = ctl->l1();
+  controller.R1 = ctl->r1();
 
 
   // Another way to query controller data is by getting the buttons() function.
@@ -114,7 +114,7 @@ void processGamepad(ControllerPtr ctl) {
 void processControllers() {
 
   // While trying to process the controller, if it doesn't get the proper data, makes this false
-  control.connected = false;
+  controller.connected = false;
 
   for (auto myController : myControllers) {
 
@@ -132,7 +132,7 @@ void processControllers() {
 
     } else {  // Regular run
       processGamepad(myController);
-      control.connected = true;
+      controller.connected = true;
     }
   }
 }
@@ -145,7 +145,7 @@ void processControllers() {
 bool safetyLoop() {
 
   // If the controller is connected
-  if (!control.connected) {
+  if (!controller.connected) {
     Serial.println("ALERT: PS4 Controller disconnected");
     return false;
   }
@@ -171,9 +171,9 @@ bool safetyLoop() {
 void calculateMech(int y, int x, int rot) {
 
   // Applies deadzones to inputs
-  if (y > -control.deadzone && y < control.deadzone) y = 0;
-  if (x > -control.deadzone && x < control.deadzone) x = 0;
-  if (rot > -control.deadzone && rot < control.deadzone) rot = 0;
+  if (y > -controller.deadzone && y < controller.deadzone) y = 0;
+  if (x > -controller.deadzone && x < controller.deadzone) x = 0;
+  if (rot > -controller.deadzone && rot < controller.deadzone) rot = 0;
 
   int speedMulti = 3;
   if (slowMode) {
@@ -183,15 +183,15 @@ void calculateMech(int y, int x, int rot) {
   }
 
   // Mechanum calculation matrix
-  motors.targetPow.FL_Motor = (y + x + rot) * speedMulti;
-  motors.targetPow.FR_Motor = (y - x - rot) * speedMulti;
-  motors.targetPow.BL_Motor = (y - x + rot) * speedMulti;
-  motors.targetPow.BR_Motor = (y + x - rot) * speedMulti;
+  robot.motor.FL_Motor = (y + x + rot) * speedMulti;
+  robot.motor.FR_Motor = (y - x - rot) * speedMulti;
+  robot.motor.BL_Motor = (y - x + rot) * speedMulti;
+  robot.motor.BR_Motor = (y + x - rot) * speedMulti;
 }
 
 
 /**
-  * Moves the robot based on direct motor control input
+  * Moves the robot based on direct motor controller input
   */
 void drive(int powFL, int powFR, int powBL, int powBR) {
 
@@ -281,66 +281,66 @@ void loop() {
   }
 
 
-  control.colorBar[0] = 0;
-  control.colorBar[1] = 255;
-  control.colorBar[2] = 0;
+  controller.colorBar[0] = 0;
+  controller.colorBar[1] = 255;
+  controller.colorBar[2] = 0;
 
 
-  if (control.L1 || control.R1) {
-    if (control.L1 && !slowMode) {
+  if (controller.L1 || controller.R1) {
+    if (controller.L1 && !slowMode) {
       fastMode = true;
-      control.colorBar[0] = 255;
-      control.colorBar[1] = 0;
-      control.colorBar[2] = 0;
+      controller.colorBar[0] = 255;
+      controller.colorBar[1] = 0;
+      controller.colorBar[2] = 0;
 
-    } else if (control.R1 && !fastMode) {
+    } else if (controller.R1 && !fastMode) {
       slowMode = true;
-      control.colorBar[0] = 0;
-      control.colorBar[1] = 255;
-      control.colorBar[2] = 0;
+      controller.colorBar[0] = 0;
+      controller.colorBar[1] = 255;
+      controller.colorBar[2] = 0;
     }
 
   } else {
     slowMode = false;
     fastMode = false;
-    control.colorBar[0] = 0;
-    control.colorBar[1] = 0;
-    control.colorBar[2] = 255;
+    controller.colorBar[0] = 0;
+    controller.colorBar[1] = 0;
+    controller.colorBar[2] = 255;
   }
 
   // Calculate mechanum wheel powers from xy controlls
-  calculateMech(control.LY, control.LX, control.RX);
+  calculateMech(controller.LY, controller.LX, controller.RX);
 
 
   /*
-  Serial.printf("R1: %d, Slow: %d, Fast: %d || ", control.R1, slowMode, fastMode);
+  Serial.printf("R1: %d, Slow: %d, Fast: %d || ", controller.R1, slowMode, fastMode);
 
-  Serial.printf("R: %d, G: %d, B: %d", control.colorBar[0], control.colorBar[1], control.colorBar[2]);
+  Serial.printf("R: %d, G: %d, B: %d", controller.colorBar[0], controller.colorBar[1], controller.colorBar[2]);
 
   
-  Serial.printf("LY: %d, LX: %d, RX: %d || ", control.LY, control.LX, control.RX);
+  Serial.printf("LY: %d, LX: %d, RX: %d || ", controller.LY, controller.LX, controller.RX);
 
-  Serial.printf("FL: %d, FR: %d, BL: %d, BR: %d\n", motors.targetPow.FL_Motor, motors.targetPow.FR_Motor, motors.targetPow.BL_Motor, motors.targetPow.BR_Motor);
+  Serial.printf("FL: %d, FR: %d, BL: %d, BR: %d\n", robot.motor.FL_Motor, robot.motor.FR_Motor, robot.motor.BL_Motor, robot.motor.BR_Motor);
 */
 
-
-  
-
+  if (controller.cross) {
+    
+  }
 
   // Check if everything is still connected
   if (!safetyLoop()) {
-    motors.targetPow.FL_Motor = 0;
-    motors.targetPow.FR_Motor = 0;
-    motors.targetPow.BL_Motor = 0;
-    motors.targetPow.BR_Motor = 0;
+    robot.motor.FL_Motor = 0;
+    robot.motor.FR_Motor = 0;
+    robot.motor.BL_Motor = 0;
+    robot.motor.BR_Motor = 0;
   }
 
   // Send calculated powers to the motor
   drive(
-    motors.targetPow.FL_Motor,
-    motors.targetPow.FR_Motor,
-    motors.targetPow.BL_Motor,
-    motors.targetPow.BR_Motor);
+    robot.motor.FL_Motor,
+    robot.motor.FR_Motor,
+    robot.motor.BL_Motor,
+    robot.motor.BR_Motor);
 
   Serial.printf("\n");
 }

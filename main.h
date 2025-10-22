@@ -38,7 +38,7 @@ Servo
 
 
 // Need this because nested structs not allowed in ArduninC, apparently
-struct MotorStuff {
+struct MotorStruct {
   int16_t
     FL_Motor = 0,
     FR_Motor = 0,
@@ -46,11 +46,19 @@ struct MotorStuff {
     BR_Motor = 0;
 };
 
+struct ServoStruct {
+  byte
+    complientPos = 0,
+    sortGatePos = 0,
+    clawPos = 0;
+};
+
 
 // Struct to store motor data
 // Nested structs not allowed
-struct MotorStruct {
-  MotorStuff targetPow;
+struct RobotStruct {
+  MotorStruct motor;
+  ServoStruct servo;
 };
 
 
@@ -91,8 +99,8 @@ struct ControllerStruct {
 
 
 
-ControllerStruct control;
-MotorStruct motors;
+ControllerStruct controller;
+RobotStruct robot;
 
 // Speed mode
 bool slowMode = false;
