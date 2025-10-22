@@ -255,7 +255,7 @@ void setup() {
   servo2.attach(servo2Pin);
   servo3.attach(servo3Pin);
 
-  swingArm.attach(swingArmPin)
+  swingArm.attach(swingArmPin);
 
   /*
   Wire.begin();
@@ -280,34 +280,51 @@ void loop() {
     processControllers();
   }
 
-  if (control.R1 && !fastMode) {
-    slowMode = true;
-    control.colorBar[0] = 255;
-    control.colorBar[1] = 0;
-    control.colorBar[2] = 0;
+
+  control.colorBar[0] = 0;
+  control.colorBar[1] = 255;
+  control.colorBar[2] = 0;
+
+
+  if (control.L1 || control.R1) {
+    if (control.L1 && !slowMode) {
+      fastMode = true;
+      control.colorBar[0] = 255;
+      control.colorBar[1] = 0;
+      control.colorBar[2] = 0;
+
+    } else if (control.R1 && !fastMode) {
+      slowMode = true;
+      control.colorBar[0] = 0;
+      control.colorBar[1] = 255;
+      control.colorBar[2] = 0;
+    }
+
   } else {
     slowMode = false;
-
-    control.colorBar[0] = 0;
-    control.colorBar[1] = 255;
-    control.colorBar[2] = 0;
-  }
-
-  if (control.L1 && !slowMode) {
-    fastMode = true;
+    fastMode = false;
     control.colorBar[0] = 0;
     control.colorBar[1] = 0;
     control.colorBar[2] = 255;
-  } else {
-    fastMode = false;
-    control.colorBar[0] = 0;
-    control.colorBar[1] = 255;
-    control.colorBar[2] = 0;
   }
-
 
   // Calculate mechanum wheel powers from xy controlls
   calculateMech(control.LY, control.LX, control.RX);
+
+
+  /*
+  Serial.printf("R1: %d, Slow: %d, Fast: %d || ", control.R1, slowMode, fastMode);
+
+  Serial.printf("R: %d, G: %d, B: %d", control.colorBar[0], control.colorBar[1], control.colorBar[2]);
+
+  
+  Serial.printf("LY: %d, LX: %d, RX: %d || ", control.LY, control.LX, control.RX);
+
+  Serial.printf("FL: %d, FR: %d, BL: %d, BR: %d\n", motors.targetPow.FL_Motor, motors.targetPow.FR_Motor, motors.targetPow.BL_Motor, motors.targetPow.BR_Motor);
+*/
+
+
+  
 
 
   // Check if everything is still connected
@@ -324,4 +341,6 @@ void loop() {
     motors.targetPow.FR_Motor,
     motors.targetPow.BL_Motor,
     motors.targetPow.BR_Motor);
+
+  Serial.printf("\n");
 }
