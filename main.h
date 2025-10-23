@@ -32,9 +32,9 @@ RoboClaw motorDriver(&Serial2, 5000);
 
 Servo
   swingArm,
-  servo1,
-  servo2,
-  servo3;
+  complientServo,
+  sortGateServo,
+  clawServo;
 
 
 // Need this because nested structs not allowed in ArduninC, apparently
@@ -103,8 +103,8 @@ ControllerStruct controller;
 RobotStruct robot;
 
 // Speed mode
-bool slowMode = false;
-bool fastMode = false;
+bool mediumSpeed = false;
+bool fastSpeed = false;
 
 
 void onConnectedController(ControllerPtr ctl);

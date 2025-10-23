@@ -175,11 +175,11 @@ void calculateMech(int y, int x, int rot) {
   if (x > -controller.deadzone && x < controller.deadzone) x = 0;
   if (rot > -controller.deadzone && rot < controller.deadzone) rot = 0;
 
-  int speedMulti = 3;
-  if (slowMode) {
-    speedMulti = 1;
-  } else if (fastMode) {
-    speedMulti = 6;
+  int speedMulti = 1;
+  if (mediumSpeed) {
+    speedMulti = 2;
+  } else if (fastSpeed) {
+    speedMulti = 4;
   }
 
   // Mechanum calculation matrix
@@ -251,9 +251,9 @@ void setup() {
   BP32.enableVirtualDevice(false);
 
 
-  servo1.attach(servo1Pin);
-  servo2.attach(servo2Pin);
-  servo3.attach(servo3Pin);
+  complientServo.attach(servo1Pin);
+  sortGateServo.attach(servo2Pin);
+  clawServo.attach(servo3Pin);
 
   swingArm.attach(swingArmPin);
 
@@ -286,23 +286,28 @@ void loop() {
   controller.colorBar[2] = 0;
 
 
+  // Adjust drive speed based on controller shoulder buttons
   if (controller.L1 || controller.R1) {
-    if (controller.L1 && !slowMode) {
-      fastMode = true;
+
+    // Left trigger - Fast speed
+    if (controller.L1 && !mediumSpeed) {
+      fastSpeed = true;
       controller.colorBar[0] = 255;
       controller.colorBar[1] = 0;
       controller.colorBar[2] = 0;
 
-    } else if (controller.R1 && !fastMode) {
-      slowMode = true;
+      // Right Trigger - Medium speed
+    } else if (controller.R1 && !fastSpeed) {
+      mediumSpeed = true;
       controller.colorBar[0] = 0;
       controller.colorBar[1] = 255;
       controller.colorBar[2] = 0;
     }
 
+    // No trigger pressed - Slow speed
   } else {
-    slowMode = false;
-    fastMode = false;
+    mediumSpeed = false;
+    fastSpeed = false;
     controller.colorBar[0] = 0;
     controller.colorBar[1] = 0;
     controller.colorBar[2] = 255;
@@ -323,9 +328,38 @@ void loop() {
   Serial.printf("FL: %d, FR: %d, BL: %d, BR: %d\n", robot.motor.FL_Motor, robot.motor.FR_Motor, robot.motor.BL_Motor, robot.motor.BR_Motor);
 */
 
+
   if (controller.cross) {
-    
+    robot.servo.complientPos = 180;  // Eject
+  } else if (controller.triangle) {
+    robot.servo.complientPos = 0;  // Reverse
+  } else {
+    robot.servo.complientPos = 90;  // Center
   }
+
+  if (controller.circle) {
+    robot.servo.sortGatePos = 50;  // Up - Gate Open
+  } else {
+    robot.servo.sortGatePos = 100;  // Down - Gate Closed
+  }
+
+  if (controller.square) {
+    robot.servo.clawPos = 45;  // Open Claw
+  } else {
+    robot.servo.clawPos = 90;  // Closse Claw / Open Gate
+  }
+
+
+  // Write servo positions
+  complientServo.write(robot.servo.complientPos);
+  sortGateServo.write(robot.servo.sortGatePos);
+  clawServo.write(robot.servo.clawPos);
+
+
+  int armSpeed = map(-controller.L2 + controller.R2, -1, 1, 75, 105);
+  swingArm.write(armSpeed);
+
+  Serial.printf("Swing Speed: %d", armSpeed);
 
   // Check if everything is still connected
   if (!safetyLoop()) {
