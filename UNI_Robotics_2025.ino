@@ -359,8 +359,6 @@ void loop() {
   int armSpeed = map(-controller.L2 + controller.R2, -1, 1, 75, 105);
   swingArm.write(armSpeed);
 
-  Serial.printf("Swing Speed: %d", armSpeed);
-
   // Check if everything is still connected
   if (!safetyLoop()) {
     robot.motor.FL_Motor = 0;
